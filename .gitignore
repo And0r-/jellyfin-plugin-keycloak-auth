@@ -1,5 +1,6 @@
 bin/
 obj/
+publish/
 .idea/
-*.DotSettings.user
 .vs/
+*.DotSettings.user

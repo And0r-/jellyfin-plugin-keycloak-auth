@@ -1,28 +1,76 @@
 # Keycloak Authentication Plugin
 
-A simple plugin for Jellyfin to authenticate against a Keycloak instance.  
-  
+A plugin for Jellyfin to authenticate users against a Keycloak instance using Direct Access Grants.
+
+## Compatibility
+
+| Plugin Version | Jellyfin Version | .NET Version |
+|----------------|------------------|--------------|
+| 2.1.x          | 10.11.x          | .NET 9       |
+| 2.0.x          | 10.8.x           | .NET 6       |
+| 1.x            | 10.7.x           | .NET 5       |
+
 ## Requirements
-* Your keycloak client config needs to have `Direct Access Grants Enabled` enabled.
-* You need to add the following roles your defined client `administrator`, `allowed_access`, `allow_media_downloads`
-* Map at least `allowed_access` to the users you want to be able to access jellyfin (or map it to a group)
-  
+
+* Keycloak client with `Direct Access Grants Enabled`
+* The following roles defined on your Keycloak client:
+  - `administrator` - Grants admin access in Jellyfin
+  - `allowed_access` - Required to log in to Jellyfin
+  - `allow_media_downloads` - Allows media downloads
+* Map at least `allowed_access` to users who should access Jellyfin (directly or via group)
 
 ## Limitations
-* This only provides a an authentication method against Keycloak, it does not handle token renewal/revoking.  
-eg: If you delete/invalidate/etc a users session/account in keycloak the session will remain active in Jellyfin.  
-(However  if you remove the `allowed_access` role and the user logs in again all sessions in Jellyfin are revoked.)  
 
-* It does not provide a true 'Single Sign On' as if the user is signed into the Realm already the user will still be prompted to authenticate to Jellyfin.  
-  
-* It does not follow oauth2 or oidc worflow, it mearly requests a token from keycloak with the username/password provided if we get a token we mark the authentication request as successfull.
+* **No token renewal/revoking:** If you delete/invalidate a user's session in Keycloak, the Jellyfin session remains active. However, if you remove the `allowed_access` role and the user logs in again, all Jellyfin sessions are revoked.
 
-## Build/Installation
-1. Have .NET SDK 5.0
-2. `dotnet publish --configuration Release --output bin`
-3. Make a directory called `keycloak` (or whatever you want) in your jellyfin keycloak directory  
-Windows: `%localappdata%\jellyfin\plugins`  
-Linux: `/var/lib/jellyfin/plugins`  
-Place the built `Jellyfin.Plugin.Keycloak.dll` and `JWT.dll` in the directory and restart Jellyfin
-4. Configure the plugin in the webui `Admin Dashboard -> Advanced -> Plugins`
+* **No true SSO:** Users must authenticate to Jellyfin even if already signed into the Keycloak realm.
 
+* **Not OAuth2/OIDC:** This plugin validates username/password via Direct Access Grants (Resource Owner Password Credentials). This allows authentication from ALL clients (TV apps, mobile apps, web) without browser redirects.
+
+## Build
+
+### Using Docker (recommended)
+
+```bash
+# Build with .NET 9 SDK container
+docker run --rm -v "$(pwd):/src" -w /src mcr.microsoft.com/dotnet/sdk:9.0 \
+  dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.csproj -o /src/publish
+```
+
+### Using local .NET SDK
+
+```bash
+# Requires .NET 9 SDK installed
+dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.csproj -o publish
+```
+
+## Installation
+
+1. Create a directory called `Keycloak` in your Jellyfin plugins directory:
+   - Linux: `/var/lib/jellyfin/plugins/Keycloak/`
+   - Windows: `%localappdata%\jellyfin\plugins\Keycloak\`
+   - Docker: `<config-volume>/plugins/Keycloak/`
+
+2. Copy the following files from `publish/`:
+   - `Jellyfin.Plugin.Keycloak.dll`
+   - `JWT.dll`
+   - `Newtonsoft.Json.dll`
+
+3. Restart Jellyfin
+
+4. Configure the plugin in: **Admin Dashboard -> Plugins -> Keycloak-Auth**
+
+## Configuration
+
+| Setting | Description |
+|---------|-------------|
+| Auth Server URL | Your Keycloak server URL (e.g., `https://auth.example.com/auth`) |
+| Realm | The Keycloak realm name |
+| Resource (Client ID) | The Keycloak client ID |
+| Client Secret | The client secret (if confidential client) |
+| Create User | Auto-create Jellyfin users for new Keycloak users |
+| Enable 2FA | Require 2FA for login (if configured in Keycloak) |
+
+## License
+
+GPL-3.0 - See [LICENSE](LICENSE) for details.
