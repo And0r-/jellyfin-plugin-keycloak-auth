@@ -9,7 +9,7 @@ description: >
   Authenticate users against Keycloak with support for Realm and Client roles,
   configurable permission mapping (Admin, Access, Download), and library access sync.
 category: "Authentication"
-owner: "Ugrend"
+owner: "Ugrend (maintained by And0r-)"
 artifacts:
 - "Jellyfin.Plugin.Keycloak.dll"
 - "JWT.dll"

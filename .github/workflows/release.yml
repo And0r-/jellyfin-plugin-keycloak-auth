@@ -1,0 +1,40 @@
+name: Release Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.csproj -o publish
+
+      - name: Create Release Archive
+        run: |
+          cd publish
+          zip -j ../keycloak-auth-${{ steps.version.outputs.VERSION }}.zip \
+            Jellyfin.Plugin.Keycloak.dll \
+            JWT.dll \
+            Newtonsoft.Json.dll
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: keycloak-auth-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

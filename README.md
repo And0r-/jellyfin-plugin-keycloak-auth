@@ -126,6 +126,13 @@ New features are opt-in:
 - Permission roles default to the original role names
 - Library Sync is disabled by default
 
+## Credits
+
+- **Original Author:** [Ugrend](https://github.com/Ugrend) - Created the initial plugin
+- **Maintained by:** [And0r-](https://github.com/And0r-) - Jellyfin 10.11+ support, configurable roles, library sync
+
+This is an actively maintained fork of the original [jellyfin-plugin-keycloak](https://github.com/Ugrend/jellyfin-plugin-keycloak) plugin.
+
 ## License
 
 GPL-3.0 - See [LICENSE](LICENSE) for details.

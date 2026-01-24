@@ -1,0 +1,20 @@
+[
+  {
+    "guid": "40886866-b3dd-4d6a-bf9b-25c83e6c3d10",
+    "name": "Keycloak Authentication",
+    "overview": "Authenticate users against Keycloak",
+    "description": "Authenticate users against Keycloak with support for Realm and Client roles, configurable permission mapping (Admin, Access, Download), and library access sync.",
+    "owner": "Ugrend (maintained by And0r-)",
+    "category": "Authentication",
+    "versions": [
+      {
+        "version": "3.0.0.0",
+        "changelog": "v3.0.0.0: Jellyfin 10.11+ support, configurable Role Source (Realm/Client), permission mapping, library access sync",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/And0r-/jellyfin-plugin-keycloak-auth",
+        "checksum": "",
+        "timestamp": "2026-01-24T00:00:00Z"
+      }
+    ]
+  }
+]
