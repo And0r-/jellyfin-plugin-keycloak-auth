@@ -63,6 +63,19 @@ dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.cspr
 
 ## Installation
 
+### Option 1: Plugin Repository (Recommended)
+
+Add one of these repository URLs in Jellyfin under **Dashboard → Plugins → Repositories → Add**:
+
+| Channel | URL | Description |
+|---------|-----|-------------|
+| **Stable** | `https://raw.githubusercontent.com/And0r-/jellyfin-plugin-keycloak-auth/master/manifest.json` | Stable releases only |
+| **Dev** | `https://raw.githubusercontent.com/And0r-/jellyfin-plugin-keycloak-auth/master/manifest-dev.json` | Latest development builds |
+
+Then install from **Catalog → Authentication → Keycloak Authentication**.
+
+### Option 2: Manual Installation
+
 1. Create a directory called `Keycloak` in your Jellyfin plugins directory:
    - Linux: `/var/lib/jellyfin/plugins/Keycloak/`
    - Windows: `%localappdata%\jellyfin\plugins\Keycloak\`

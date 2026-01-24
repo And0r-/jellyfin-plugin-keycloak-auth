@@ -1,0 +1,115 @@
+name: Dev Release
+
+on:
+  push:
+    branches: [ master, 'feature/*', 'fork/*' ]
+    paths-ignore:
+      - 'manifest.json'
+      - 'manifest-dev.json'
+      - '*.md'
+
+jobs:
+  dev-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Get version info
+        id: version
+        run: |
+          # Get base version from csproj
+          BASE_VERSION=$(grep -oP '(?<=<AssemblyVersion>)[^<]+' Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.csproj)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DEV_VERSION="${BASE_VERSION}-dev.${SHORT_SHA}"
+          echo "DEV_VERSION=$DEV_VERSION" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.csproj -o publish
+
+      - name: Create Release Archive
+        run: |
+          cd publish
+          zip -j ../keycloak-auth-${{ steps.version.outputs.DEV_VERSION }}.zip \
+            Jellyfin.Plugin.Keycloak.dll \
+            JWT.dll \
+            Newtonsoft.Json.dll
+
+      - name: Calculate checksum
+        id: checksum
+        run: |
+          CHECKSUM=$(md5sum keycloak-auth-${{ steps.version.outputs.DEV_VERSION }}.zip | cut -d' ' -f1)
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+
+      - name: Delete old dev release
+        run: |
+          gh release delete dev --yes || true
+          git push origin :refs/tags/dev || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Dev Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: dev
+          name: "Dev Build (${{ steps.version.outputs.SHORT_SHA }})"
+          files: keycloak-auth-${{ steps.version.outputs.DEV_VERSION }}.zip
+          prerelease: true
+          body: |
+            **Development Build**
+
+            Version: `${{ steps.version.outputs.DEV_VERSION }}`
+            Commit: ${{ github.sha }}
+
+            ⚠️ This is an unstable development build. Use at your own risk.
+
+            Add this repository URL to Jellyfin for dev builds:
+            ```
+            https://raw.githubusercontent.com/${{ github.repository }}/master/manifest-dev.json
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update manifest-dev.json
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/dev/keycloak-auth-${{ steps.version.outputs.DEV_VERSION }}.zip"
+
+          cat > manifest-dev.json << EOF
+          [
+            {
+              "guid": "40886866-b3dd-4d6a-bf9b-25c83e6c3d10",
+              "name": "Keycloak Authentication (Dev)",
+              "overview": "Authenticate users against Keycloak - Development Build",
+              "description": "Development build. Use stable channel for production.",
+              "owner": "Ugrend (maintained by And0r-)",
+              "category": "Authentication",
+              "versions": [
+                {
+                  "version": "${{ steps.version.outputs.DEV_VERSION }}",
+                  "changelog": "Dev build from commit ${{ steps.version.outputs.SHORT_SHA }}",
+                  "targetAbi": "10.11.0.0",
+                  "sourceUrl": "https://github.com/${{ github.repository }}",
+                  "downloadUrl": "${DOWNLOAD_URL}",
+                  "checksum": "${{ steps.checksum.outputs.CHECKSUM }}",
+                  "timestamp": "${TIMESTAMP}"
+                }
+              ]
+            }
+          ]
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest-dev.json
+          git diff --staged --quiet || git commit -m "Update manifest-dev.json for ${{ steps.version.outputs.SHORT_SHA }}"
+          git push origin HEAD:master

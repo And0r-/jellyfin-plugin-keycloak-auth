@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "40886866-b3dd-4d6a-bf9b-25c83e6c3d10",
+    "name": "Keycloak Authentication (Dev)",
+    "overview": "Authenticate users against Keycloak - Development Build",
+    "description": "Development build. Use stable channel for production.",
+    "owner": "Ugrend (maintained by And0r-)",
+    "category": "Authentication",
+    "versions": []
+  }
+]

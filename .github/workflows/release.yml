@@ -1,4 +1,4 @@
-name: Release Plugin
+name: Stable Release
 
 on:
   push:
@@ -6,10 +6,14 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -31,10 +35,58 @@ jobs:
             JWT.dll \
             Newtonsoft.Json.dll
 
-      - name: Create Release
+      - name: Calculate checksum
+        id: checksum
+        run: |
+          CHECKSUM=$(md5sum keycloak-auth-${{ steps.version.outputs.VERSION }}.zip | cut -d' ' -f1)
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: keycloak-auth-${{ steps.version.outputs.VERSION }}.zip
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update manifest.json on master
+        run: |
+          git checkout master
+          git pull origin master
+
+          # Update manifest with new version
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.VERSION }}/keycloak-auth-${{ steps.version.outputs.VERSION }}.zip"
+
+          # Create new version entry and prepend to versions array
+          python3 << EOF
+          import json
+
+          with open('manifest.json', 'r') as f:
+              manifest = json.load(f)
+
+          new_version = {
+              "version": "${{ steps.version.outputs.VERSION }}",
+              "changelog": "See https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }}",
+              "targetAbi": "10.11.0.0",
+              "sourceUrl": "https://github.com/${{ github.repository }}",
+              "downloadUrl": "${DOWNLOAD_URL}",
+              "checksum": "${{ steps.checksum.outputs.CHECKSUM }}",
+              "timestamp": "${TIMESTAMP}"
+          }
+
+          # Remove existing entry with same version if exists
+          manifest[0]["versions"] = [v for v in manifest[0]["versions"] if v["version"] != "${{ steps.version.outputs.VERSION }}"]
+
+          # Prepend new version
+          manifest[0]["versions"].insert(0, new_version)
+
+          with open('manifest.json', 'w') as f:
+              json.dump(manifest, f, indent=2)
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Update manifest.json for v${{ steps.version.outputs.VERSION }}"
+          git push origin master
