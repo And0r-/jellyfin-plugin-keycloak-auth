@@ -6,6 +6,16 @@
     "description": "Development build. Use stable channel for production.",
     "owner": "Ugrend (maintained by And0r-)",
     "category": "Authentication",
-    "versions": []
+    "versions": [
+      {
+        "version": "3.0.0.0-dev.7c0378b",
+        "changelog": "Dev build from commit 7c0378b",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/And0r-/jellyfin-plugin-keycloak-auth",
+        "downloadUrl": "https://github.com/And0r-/jellyfin-plugin-keycloak-auth/releases/download/dev/keycloak-auth-3.0.0.0-dev.7c0378b.zip",
+        "checksum": "4447eb4d7c8093f5cbe06fa95a6f9b1c",
+        "timestamp": "2026-01-24T17:15:56Z"
+      }
+    ]
   }
 ]
