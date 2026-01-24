@@ -1,16 +1,20 @@
 ---
 name: "Keycloak Authentication"
 guid: "40886866-b3dd-4d6a-bf9b-25c83e6c3d10"
-version: "1.0.0.0"
-targetAbi: "10.7.0.0"
-framework: "net5.0"
+version: "3.0.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
 overview: "Authenticate users against Keycloak"
 description: >
-  Authenticate users against Keycloak.
+  Authenticate users against Keycloak with support for Realm and Client roles,
+  configurable permission mapping (Admin, Access, Download), and library access sync.
 category: "Authentication"
 owner: "Ugrend"
 artifacts:
 - "Jellyfin.Plugin.Keycloak.dll"
 - "JWT.dll"
+- "Newtonsoft.Json.dll"
 changelog: >
-  changelog
+  v3.0.0.0: Updated for Jellyfin 10.11+ (net9.0), added configurable Role Source
+  (Realm/Client roles), permission mapping (Admin/Access/Download roles),
+  and library access sync based on Keycloak roles.

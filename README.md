@@ -6,22 +6,39 @@ A plugin for Jellyfin to authenticate users against a Keycloak instance using Di
 
 | Plugin Version | Jellyfin Version | .NET Version |
 |----------------|------------------|--------------|
-| 2.1.x          | 10.11.x          | .NET 9       |
+| 3.0.x          | 10.11.x          | .NET 9       |
 | 2.0.x          | 10.8.x           | .NET 6       |
 | 1.x            | 10.7.x           | .NET 5       |
+
+## Features
+
+- **Flexible Role Source:** Choose between Keycloak Client Roles or Realm Roles
+- **Configurable Permission Mapping:** Map any Keycloak role to Jellyfin permissions
+- **Library Access Sync:** Automatically sync library access based on Keycloak roles
+- **Backwards Compatible:** Default configuration works with existing setups
 
 ## Requirements
 
 * Keycloak client with `Direct Access Grants Enabled`
-* The following roles defined on your Keycloak client:
-  - `administrator` - Grants admin access in Jellyfin
-  - `allowed_access` - Required to log in to Jellyfin
-  - `allow_media_downloads` - Allows media downloads
-* Map at least `allowed_access` to users who should access Jellyfin (directly or via group)
+* Roles configured in Keycloak (Client Roles or Realm Roles)
+
+### Default Role Names (Backwards Compatible)
+
+If you don't change the default configuration:
+- `administrator` - Grants admin access in Jellyfin
+- `allowed_access` - Required to log in to Jellyfin
+- `allow_media_downloads` - Allows media downloads
+
+### Custom Role Names
+
+You can configure any role names in the plugin settings. For example:
+- Admin Roles: `admin, superuser`
+- Allowed Access Roles: `user, member, admin`
+- Download Roles: `premium, admin`
 
 ## Limitations
 
-* **No token renewal/revoking:** If you delete/invalidate a user's session in Keycloak, the Jellyfin session remains active. However, if you remove the `allowed_access` role and the user logs in again, all Jellyfin sessions are revoked.
+* **No token renewal/revoking:** If you delete/invalidate a user's session in Keycloak, the Jellyfin session remains active. However, if you remove the access role and the user logs in again, all Jellyfin sessions are revoked.
 
 * **No true SSO:** Users must authenticate to Jellyfin even if already signed into the Keycloak realm.
 
@@ -62,14 +79,52 @@ dotnet publish -c Release Jellyfin.Plugin.Keycloak/Jellyfin.Plugin.Keycloak.cspr
 
 ## Configuration
 
+### Keycloak Connection
+
 | Setting | Description |
 |---------|-------------|
 | Auth Server URL | Your Keycloak server URL (e.g., `https://auth.example.com/auth`) |
 | Realm | The Keycloak realm name |
 | Resource (Client ID) | The Keycloak client ID |
-| Client Secret | The client secret (if confidential client) |
+| Client Secret | The client secret (leave empty for public clients) |
+
+### User Settings
+
+| Setting | Description |
+|---------|-------------|
 | Create User | Auto-create Jellyfin users for new Keycloak users |
-| Enable 2FA | Require 2FA for login (if configured in Keycloak) |
+| Enable 2FA | Append `_2FA=CODE` to password for TOTP |
+
+### Role Configuration
+
+| Setting | Description |
+|---------|-------------|
+| Role Source | Where to read roles from: Client Roles or Realm Roles |
+| Client Name for Roles | Client name when using Client Roles (default: same as Resource) |
+
+### Permission Mapping
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Admin Roles | Roles that grant Jellyfin admin status | `administrator` |
+| Allowed Access Roles | Roles required to log in | `allowed_access` |
+| Download Roles | Roles that allow media downloads | `allow_media_downloads` |
+
+### Library Access Sync
+
+| Setting | Description |
+|---------|-------------|
+| Enable Library Sync | Sync library access based on roles on each login |
+| Library Role Mapping | For each library, specify which roles have access |
+
+## Upgrading from v2.x
+
+The plugin is backwards compatible. Your existing configuration will continue to work.
+
+New features are opt-in:
+- Role Source defaults to Client Roles
+- Permission roles default to the original role names
+- Library Sync is disabled by default
 
 ## License
 

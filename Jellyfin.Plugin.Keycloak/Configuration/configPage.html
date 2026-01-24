@@ -9,40 +9,100 @@
     <div data-role="content">
         <div class="content-primary">
             <form id="TemplateConfigForm">
-                <div class="checkboxContainer checkboxContainer-withDescription">
-                    <label class="emby-checkbox-label">
-                        <input id="Enable2FA" name="TrueFalseCheckBox" type="checkbox" is="emby-checkbox"/>
-                        <span>Enable2FA</span>
-                    </label>
-                    <div class="fieldDescription">BIGHACK: add _2FA=CODEHERE to end of password when loging in</div>
-                </div>
-                <div class="checkboxContainer checkboxContainer-withDescription">
-                    <label class="emby-checkbox-label">
-                        <input id="CreateUser" name="TrueFalseCheckBox" type="checkbox" is="emby-checkbox"/>
-                        <span>Create User if doesn't exist</span>
-                    </label>
-                </div>
+                <h2>Keycloak Connection</h2>
                 <div class="inputContainer">
                     <label class="inputLabel inputLabelUnfocused" for="AuthServerUrl">Auth Server URL</label>
                     <input id="AuthServerUrl" name="AuthServerUrl" type="text" is="emby-input"/>
-                    <div class="fieldDescription">Base Keycloak auth URI</div>
+                    <div class="fieldDescription">Base Keycloak auth URI (e.g., https://auth.example.com/auth)</div>
                 </div>
                 <div class="inputContainer">
-                    <label class="inputeLabel inputLabelUnfocused" for="Realm">Realm</label>
-                    <input id="Realm" name="AString" type="text" is="emby-input"/>
+                    <label class="inputLabel inputLabelUnfocused" for="Realm">Realm</label>
+                    <input id="Realm" name="Realm" type="text" is="emby-input"/>
                     <div class="fieldDescription">Keycloak Realm</div>
                 </div>
                 <div class="inputContainer">
-                    <label class="inputeLabel inputLabelUnfocused" for="Resource">Resource/Client</label>
-                    <input id="Resource" name="AString" type="text" is="emby-input"/>
-                    <div class="fieldDescription">Keycloak Resource/Client</div>
+                    <label class="inputLabel inputLabelUnfocused" for="Resource">Resource/Client ID</label>
+                    <input id="Resource" name="Resource" type="text" is="emby-input"/>
+                    <div class="fieldDescription">Keycloak Client ID for authentication (Direct Access Grants)</div>
                 </div>
                 <div class="inputContainer">
-                    <label class="inputeLabel inputLabelUnfocused" for="ClientSecret">Client Secret</label>
-                    <input id="ClientSecret" name="AString" type="text" is="emby-input"/>
-                    <div class="fieldDescription">Client Secret</div>
+                    <label class="inputLabel inputLabelUnfocused" for="ClientSecret">Client Secret</label>
+                    <input id="ClientSecret" name="ClientSecret" type="password" is="emby-input"/>
+                    <div class="fieldDescription">Client Secret (leave empty for public clients)</div>
                 </div>
-                <div>
+
+                <h2>User Settings</h2>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="CreateUser" name="CreateUser" type="checkbox" is="emby-checkbox"/>
+                        <span>Create user if doesn't exist</span>
+                    </label>
+                    <div class="fieldDescription">Automatically create Jellyfin user on first Keycloak login</div>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="Enable2FA" name="Enable2FA" type="checkbox" is="emby-checkbox"/>
+                        <span>Enable 2FA</span>
+                    </label>
+                    <div class="fieldDescription">Append _2FA=CODE to password when logging in</div>
+                </div>
+
+                <h2>Role Configuration</h2>
+                <div class="selectContainer">
+                    <label class="selectLabel" for="RoleSource">Role Source</label>
+                    <select id="RoleSource" is="emby-select">
+                        <option value="ClientRoles">Client Roles (resource_access.{client}.roles)</option>
+                        <option value="RealmRoles">Realm Roles (realm_access.roles)</option>
+                    </select>
+                    <div class="fieldDescription">Where to read roles from in the Keycloak token</div>
+                </div>
+                <div id="clientRoleSourceContainer" class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="RoleSourceClient">Client Name for Roles</label>
+                    <input id="RoleSourceClient" name="RoleSourceClient" type="text" is="emby-input"/>
+                    <div class="fieldDescription">Client name to read roles from (usually same as Resource/Client ID)</div>
+                </div>
+
+                <h2>Permission Mapping</h2>
+                <div class="fieldDescription" style="margin-bottom: 15px;">
+                    Map Keycloak roles to Jellyfin permissions. Enter comma-separated role names.
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="AllowedAccessRoles">Allowed Access Roles</label>
+                    <input id="AllowedAccessRoles" name="AllowedAccessRoles" type="text" is="emby-input"/>
+                    <div class="fieldDescription">Users with these roles can log in to Jellyfin</div>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="AdminRoles">Admin Roles</label>
+                    <input id="AdminRoles" name="AdminRoles" type="text" is="emby-input"/>
+                    <div class="fieldDescription">Users with these roles become Jellyfin administrators</div>
+                </div>
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="DownloadRoles">Download Roles</label>
+                    <input id="DownloadRoles" name="DownloadRoles" type="text" is="emby-input"/>
+                    <div class="fieldDescription">Users with these roles can download media</div>
+                </div>
+
+                <h2>Library Access Sync</h2>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="EnableLibrarySync" name="EnableLibrarySync" type="checkbox" is="emby-checkbox"/>
+                        <span>Enable library access sync</span>
+                    </label>
+                    <div class="fieldDescription">Sync library access based on Keycloak roles on each login</div>
+                </div>
+
+                <div id="libraryMappingContainer" style="display: none; margin-top: 20px;">
+                    <h3>Library Role Mapping</h3>
+                    <div class="fieldDescription" style="margin-bottom: 15px;">
+                        For each library, enter comma-separated roles that should have access.
+                        Leave empty to not manage that library (user keeps manual settings).
+                    </div>
+                    <div id="libraryList">
+                        <div class="fieldDescription">Loading libraries...</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
                     <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                         <span>Save</span>
                     </button>
@@ -53,43 +113,156 @@
     <script type="text/javascript">
         var KeycloakPluginConfig = {
             pluginUniqueId: '40886866-b3dd-4d6a-bf9b-25c83e6c3d10',
-            chkCreateUser: document.querySelector('#CreateUser'),
-            txtAuthServerUrl: document.querySelector('#AuthServerUrl'),
-            txtRealm: document.querySelector('#Realm'),
-            txtResource: document.querySelector('#Resource'),
-            txtClientSecret: document.querySelector('#ClientSecret'),
-            chkEnable2FA: document.querySelector('#Enable2FA'),
+            libraryMapping: {},
+            libraries: []
         };
+
+        function loadLibraries() {
+            return ApiClient.getVirtualFolders().then(function(folders) {
+                KeycloakPluginConfig.libraries = folders;
+                return folders;
+            });
+        }
+
+        function renderLibraryMapping() {
+            var container = document.querySelector('#libraryList');
+            var libraries = KeycloakPluginConfig.libraries;
+            var mapping = KeycloakPluginConfig.libraryMapping;
+
+            if (!libraries || libraries.length === 0) {
+                container.innerHTML = '<div class="fieldDescription">No libraries found</div>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < libraries.length; i++) {
+                var lib = libraries[i];
+                var libId = lib.ItemId;
+                var roles = mapping[libId] || '';
+
+                html += '<div class="inputContainer">';
+                html += '<label class="inputLabel inputLabelUnfocused" for="lib_' + libId + '">' + lib.Name + '</label>';
+                html += '<input id="lib_' + libId + '" data-library-id="' + libId + '" type="text" is="emby-input" class="libraryRoleInput" value="' + roles + '"/>';
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function collectLibraryMapping() {
+            var mapping = {};
+            var inputs = document.querySelectorAll('.libraryRoleInput');
+            for (var i = 0; i < inputs.length; i++) {
+                var input = inputs[i];
+                var libId = input.getAttribute('data-library-id');
+                var roles = input.value.trim();
+                if (roles) {
+                    mapping[libId] = roles;
+                }
+            }
+            return JSON.stringify(mapping);
+        }
+
+        function toggleLibraryMapping() {
+            var container = document.querySelector('#libraryMappingContainer');
+            var checkbox = document.querySelector('#EnableLibrarySync');
+            container.style.display = checkbox.checked ? 'block' : 'none';
+
+            if (checkbox.checked && KeycloakPluginConfig.libraries.length === 0) {
+                loadLibraries().then(renderLibraryMapping);
+            }
+        }
+
+        function toggleRoleSourceClient() {
+            var container = document.querySelector('#clientRoleSourceContainer');
+            var select = document.querySelector('#RoleSource');
+            container.style.display = select.value === 'ClientRoles' ? 'block' : 'none';
+        }
 
         document.querySelector('#TemplateConfigPage')
             .addEventListener('pageshow', function () {
                 Dashboard.showLoadingMsg();
-                ApiClient.getPluginConfiguration(KeycloakPluginConfig.pluginUniqueId).then(function (config) {
-                    KeycloakPluginConfig.chkCreateUser.checked = config.CreateUser;
-                    KeycloakPluginConfig.txtAuthServerUrl.value = config.AuthServerUrl;
-                    KeycloakPluginConfig.txtRealm.value = config.Realm;
-                    KeycloakPluginConfig.txtResource.value = config.Resource;
-                    KeycloakPluginConfig.txtClientSecret.value = config.ClientSecret;
-                    KeycloakPluginConfig.chkEnable2FA.checked = config.Enable2FA;
+
+                Promise.all([
+                    ApiClient.getPluginConfiguration(KeycloakPluginConfig.pluginUniqueId),
+                    loadLibraries()
+                ]).then(function(results) {
+                    var config = results[0];
+
+                    // Keycloak Connection
+                    document.querySelector('#AuthServerUrl').value = config.AuthServerUrl || '';
+                    document.querySelector('#Realm').value = config.Realm || '';
+                    document.querySelector('#Resource').value = config.Resource || '';
+                    document.querySelector('#ClientSecret').value = config.ClientSecret || '';
+
+                    // User Settings
+                    document.querySelector('#CreateUser').checked = config.CreateUser;
+                    document.querySelector('#Enable2FA').checked = config.Enable2Fa;
+
+                    // Role Configuration
+                    document.querySelector('#RoleSource').value = config.RoleSource === 1 ? 'RealmRoles' : 'ClientRoles';
+                    document.querySelector('#RoleSourceClient').value = config.RoleSourceClient || 'jellyfin';
+
+                    // Permission Mapping (with legacy AdminRole migration)
+                    var adminRolesValue = config.AdminRoles || config.AdminRole || 'administrator';
+                    document.querySelector('#AdminRoles').value = adminRolesValue;
+                    document.querySelector('#AllowedAccessRoles').value = config.AllowedAccessRoles || 'allowed_access';
+                    document.querySelector('#DownloadRoles').value = config.DownloadRoles || 'allow_media_downloads';
+
+                    // Library Sync
+                    document.querySelector('#EnableLibrarySync').checked = config.EnableLibrarySync;
+
+                    try {
+                        KeycloakPluginConfig.libraryMapping = config.LibraryRoleMapping ? JSON.parse(config.LibraryRoleMapping) : {};
+                    } catch (e) {
+                        KeycloakPluginConfig.libraryMapping = {};
+                    }
+
+                    renderLibraryMapping();
+                    toggleLibraryMapping();
+                    toggleRoleSourceClient();
+
                     Dashboard.hideLoadingMsg();
                 });
             });
+
+        document.querySelector('#EnableLibrarySync').addEventListener('change', toggleLibraryMapping);
+        document.querySelector('#RoleSource').addEventListener('change', toggleRoleSourceClient);
 
         document.querySelector('#TemplateConfigForm')
             .addEventListener('submit', function (e) {
                 e.preventDefault();
                 Dashboard.showLoadingMsg();
+
                 ApiClient.getPluginConfiguration(KeycloakPluginConfig.pluginUniqueId).then(function (config) {
-                    config.CreateUser = KeycloakPluginConfig.chkCreateUser.checked;
-                    config.AuthServerUrl = KeycloakPluginConfig.txtAuthServerUrl.value;
-                    config.Realm = KeycloakPluginConfig.txtRealm.value;
-                    config.Resource = KeycloakPluginConfig.txtResource.value;
-                    config.ClientSecret = KeycloakPluginConfig.txtClientSecret.value;
-                    config.Enable2FA = KeycloakPluginConfig.chkEnable2FA.checked;
+                    // Keycloak Connection
+                    config.AuthServerUrl = document.querySelector('#AuthServerUrl').value;
+                    config.Realm = document.querySelector('#Realm').value;
+                    config.Resource = document.querySelector('#Resource').value;
+                    config.ClientSecret = document.querySelector('#ClientSecret').value;
+
+                    // User Settings
+                    config.CreateUser = document.querySelector('#CreateUser').checked;
+                    config.Enable2Fa = document.querySelector('#Enable2FA').checked;
+
+                    // Role Configuration
+                    config.RoleSource = document.querySelector('#RoleSource').value === 'RealmRoles' ? 1 : 0;
+                    config.RoleSourceClient = document.querySelector('#RoleSourceClient').value;
+
+                    // Permission Mapping
+                    config.AdminRoles = document.querySelector('#AdminRoles').value;
+                    config.AllowedAccessRoles = document.querySelector('#AllowedAccessRoles').value;
+                    config.DownloadRoles = document.querySelector('#DownloadRoles').value;
+
+                    // Library Sync
+                    config.EnableLibrarySync = document.querySelector('#EnableLibrarySync').checked;
+                    config.LibraryRoleMapping = collectLibraryMapping();
+
                     ApiClient.updatePluginConfiguration(KeycloakPluginConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });
                 });
+
                 return false;
             });
     </script>
