@@ -200,7 +200,9 @@
                     document.querySelector('#Enable2FA').checked = config.Enable2Fa;
 
                     // Role Configuration
-                    document.querySelector('#RoleSource').value = config.RoleSource === 1 ? 'RealmRoles' : 'ClientRoles';
+                    // RoleSource: enum can be serialized as int (0/1) or string ("ClientRoles"/"RealmRoles")
+                    var roleSourceValue = (config.RoleSource === 1 || config.RoleSource === 'RealmRoles') ? 'RealmRoles' : 'ClientRoles';
+                    document.querySelector('#RoleSource').value = roleSourceValue;
                     document.querySelector('#RoleSourceClient').value = config.RoleSourceClient || 'jellyfin';
 
                     // Permission Mapping (with legacy AdminRole migration)
