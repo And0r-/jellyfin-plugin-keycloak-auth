@@ -129,6 +129,33 @@ Then install from **Catalog → Authentication → Keycloak Authentication**.
 |---------|-------------|
 | Enable Library Sync | Sync library access based on roles on each login |
 | Library Role Mapping | For each library, specify which roles have access |
+| Sync All Users Now | Button to manually sync all users' library access |
+
+#### Runtime Enforcement
+
+Library access is enforced at multiple levels to prevent permission drift:
+
+- **On login** (including Quick Connect and all auth methods)
+- **On user update** (detects if Jellyfin resets permissions, e.g., during library scans)
+- **After library scans** (re-applies permissions for all cached users)
+- **Manual sync** (via the "Sync All Users Now" button or the Scheduled Task)
+
+The manual sync and post-scan enforcement fetch roles directly from the Keycloak Admin API, so they work even after a Jellyfin restart when no cached roles are available.
+
+#### Keycloak Client Setup for Admin API Access
+
+For the plugin to fetch roles from Keycloak (required for Quick Connect, manual sync, and post-scan enforcement), the Keycloak client needs:
+
+1. **Service Accounts Enabled** on the client (Client → Settings → Authentication flow)
+2. **Service Account Roles** (Client → Service accounts roles → Assign role):
+   - Filter by **client**: `realm-management`
+   - Assign: `view-users` and `query-users`
+
+Without these permissions, the plugin still works for standard username/password logins but cannot enforce permissions for Quick Connect logins or manual sync.
+
+#### Scheduled Task
+
+The plugin registers a scheduled task **"Sync Keycloak Library Access"** (category: Keycloak) that can be triggered manually from Dashboard → Scheduled Tasks. This performs the same action as the "Sync All Users Now" button.
 
 ## Upgrading from v2.x
 

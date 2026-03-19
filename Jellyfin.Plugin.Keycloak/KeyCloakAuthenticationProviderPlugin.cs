@@ -440,6 +440,12 @@ namespace Jellyfin.Plugin.Keycloak
                 await SyncUserPermissions(user, keycloakUser, userManager).ConfigureAwait(false);
             }
 
+            // Cache roles for runtime enforcement (protects against Jellyfin resetting permissions)
+            var cachedRoles = keycloakUser.Permissions
+                .Select(p => p.ToLowerInvariant())
+                .ToHashSet();
+            LibraryAccessEnforcer.CacheUserRoles(username, cachedRoles);
+
             return new ProviderAuthenticationResult { Username = username };
         }
 

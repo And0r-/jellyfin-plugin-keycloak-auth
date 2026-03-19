@@ -91,6 +91,13 @@
                     <div class="fieldDescription">Sync library access based on Keycloak roles on each login</div>
                 </div>
 
+                <div id="syncContainer" style="display: none; margin-top: 10px;">
+                    <button id="SyncAllUsersBtn" is="emby-button" type="button" class="raised emby-button" style="margin-bottom: 15px;">
+                        <span>Sync All Users Now</span>
+                    </button>
+                    <div id="syncStatus" class="fieldDescription" style="display: none;"></div>
+                </div>
+
                 <div id="libraryMappingContainer" style="display: none; margin-top: 20px;">
                     <h3>Library Role Mapping</h3>
                     <div class="fieldDescription" style="margin-bottom: 15px;">
@@ -165,8 +172,10 @@
 
         function toggleLibraryMapping() {
             var container = document.querySelector('#libraryMappingContainer');
+            var syncContainer = document.querySelector('#syncContainer');
             var checkbox = document.querySelector('#EnableLibrarySync');
             container.style.display = checkbox.checked ? 'block' : 'none';
+            syncContainer.style.display = checkbox.checked ? 'block' : 'none';
 
             if (checkbox.checked && KeycloakPluginConfig.libraries.length === 0) {
                 loadLibraries().then(renderLibraryMapping);
@@ -230,6 +239,50 @@
 
         document.querySelector('#EnableLibrarySync').addEventListener('change', toggleLibraryMapping);
         document.querySelector('#RoleSource').addEventListener('change', toggleRoleSourceClient);
+
+        document.querySelector('#SyncAllUsersBtn').addEventListener('click', function () {
+            var btn = this;
+            var status = document.querySelector('#syncStatus');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Syncing...';
+            status.style.display = 'block';
+            status.textContent = 'Finding Keycloak sync task...';
+
+            // Find the task ID first, then trigger it
+            ApiClient.getScheduledTasks().then(function (tasks) {
+                var syncTask = tasks.find(function (t) { return t.Key === 'KeycloakSyncLibraryAccess'; });
+                if (!syncTask) {
+                    throw new Error('Sync task not found. Is the plugin loaded?');
+                }
+                status.textContent = 'Syncing library access for all users...';
+                return ApiClient.startScheduledTask(syncTask.Id);
+            }).then(function () {
+                // Poll for completion
+                var pollCount = 0;
+                var poll = setInterval(function () {
+                    pollCount++;
+                    ApiClient.getScheduledTasks().then(function (tasks) {
+                        var syncTask = tasks.find(function (t) { return t.Key === 'KeycloakSyncLibraryAccess'; });
+                        if (syncTask && syncTask.State === 'Idle') {
+                            clearInterval(poll);
+                            status.textContent = 'Sync complete! Check Jellyfin logs for details.';
+                            btn.disabled = false;
+                            btn.querySelector('span').textContent = 'Sync All Users Now';
+                        }
+                    });
+                    if (pollCount > 30) {
+                        clearInterval(poll);
+                        status.textContent = 'Sync is still running in the background.';
+                        btn.disabled = false;
+                        btn.querySelector('span').textContent = 'Sync All Users Now';
+                    }
+                }, 1000);
+            }).catch(function (err) {
+                status.textContent = 'Sync failed: ' + (err.message || err);
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'Sync All Users Now';
+            });
+        });
 
         document.querySelector('#TemplateConfigForm')
             .addEventListener('submit', function (e) {
